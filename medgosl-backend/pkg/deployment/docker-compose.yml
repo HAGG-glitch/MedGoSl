@@ -1,0 +1,37 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    container_name: postgres_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASS}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  medgosl:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: go_app
+    depends_on:
+      - db
+    environment:
+      DATABASE_DSN: "host=db user=${DB_USER} password=${DB_PASS} dbname=${DB_NAME} port=5432 sslmode=disable"
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+      ADDR: ${ADDR}
+    ports:
+      - "8080:8080"
+    volumes:
+      - ../..:/app
+    working_dir: /app
+    # For dev: run source directly
+    command: ["go", "run", "cmd/medgosl/main.go"]
+
+volumes:
+  postgres_data:
